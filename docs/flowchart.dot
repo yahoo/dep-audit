@@ -1,0 +1,38 @@
+digraph {
+    subgraph cluster_logic {
+        label="Logic";
+        node[shape="box", style="rounded"]
+            start; good; bad;
+        node[shape="diamond", style=""]
+            spdx_valid; inclusion_list; exclusion_list; hook;
+    }
+
+    start -> hook;
+    hook -> bad[label="no"];
+    hook -> spdx_valid[label="yes"];
+    spdx_valid -> exclusion_list[label="yes"];
+    spdx_valid -> inclusion_list[label="no"];
+    exclusion_list -> bad[label="yes"];
+    exclusion_list -> good[label="no"];
+    inclusion_list -> good[label="yes"];
+    inclusion_list -> bad[label="no"];
+
+    spdx_valid[label="Is 'valid'\nSPDX license?"];
+    hook[label="Passes\nuser-supplied\nhook?"];
+    inclusion_list[label="Is in the\ninclusion list?"]
+    exclusion_list[label="Is in the\nexclusion list?"]
+
+    subgraph cluster_data {
+        label="Data";
+        list_item[
+            label=<<table border="0" cellborder="1" cellspacing="0">
+                <tr><td><b>list_item</b></td></tr>
+                <tr><td>name</td></tr>
+                <tr><td>audit_trail</td></tr>
+                <tr><td>desc</td></tr>
+                <tr><td>version_range</td></tr>
+                </table>>
+            shape="none"
+        ]
+    }
+}

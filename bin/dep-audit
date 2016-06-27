@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+/*
+Copyright 2016, Yahoo Inc.
+Code licensed under the MIT License.
+See LICENSE.txt
+*/
+var audit = require('../index')
+var request = require('request')
+var argv = require('yargs')
+.usage('Usage:\n$0 --config <path to config file> [options]' + 
+  '\n$0 --config-url <url> [options]')
+.config()
+.describe({'config-url': 'URL to JSON config file',
+  'hook': 'Path to hook to execute on modules before auditing',
+  'fix': 'Attempt to fix incorrect licenses',
+  'guess': 'Attempt to guess licenses from files other than package.json'})
+.string(['config', 'config-url', 'hook'])
+.boolean(['fix', 'guess', 'version'])
+.version()
+.help()
+.argv
+
+if (argv['config-url']) {
+  request(argv['config-url'], function (err, res, body) {
+    if (err) {
+      console.error('Could not fetch config file')
+      process.exit(2)
+    } else if (res.statusCode === 200) {
+      checkDependencies(body)
+    }
+  })
+}
+
+else if (argv.config) {
+  checkDependencies()
+}
+
+function checkDependencies (body) {
+  var opts = {
+    checker: 
+      {start: process.cwd(),
+      production: true,
+      unknown: !argv.guess},
+    fix: argv.fix,
+    spdx: (body || argv).spdx,
+    include: (body || argv).inclusions || {},
+    exclude: (body || argv).exclusions || {}
+  }
+  var beforeHook
+  if (argv.hook) {
+    beforeHook = require(argv.hook)
+  }
+
+  audit(opts, function (error, inclusions) {
+    if (error) {
+      console.error(error.toString())
+      if (error.item) { // module is on exclusion list
+          console.error(error.item.desc)
+          console.error(error.item.audit_trail)
+      }
+      process.exit(1)
+    }
+    console.log('All modules are allowed!')
+    inclusions.forEach(function (item) {
+        console.log(item.name +' is on the inclusion list.')
+        console.log(item.desc)
+        console.log(item.audit_trail)
+    })
+  }, beforeHook)
+}

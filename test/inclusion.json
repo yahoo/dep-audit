@@ -1,0 +1,13 @@
+{
+    "exclusions": {},
+    "inclusions": {
+        "tweetnacl": [
+            {
+                "version_range": "0.13.3",
+                "audit_trail": "foo",
+                "desc": "bar"
+            }
+        ]
+    },
+    "spdx": "(MIT OR ISC OR BSD-3-Clause OR BSD-2-Clause OR WTFPL OR Apache-2.0 OR CC-BY-3.0 OR Unlicense OR MPL-2.0)"
+}

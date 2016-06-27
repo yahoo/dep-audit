@@ -1,0 +1,39 @@
+{
+  "name": "dep-audit",
+  "version": "1.0.0-rc.1",
+  "description": "Audits licenses of npm packages installed as dependencies",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && mocha",
+    "coverage": "istanbul cover _mocha",
+    "doc": "dot -Tsvg docs/flowchart.dot > docs/flowchart.svg"
+  },
+  "bin": {
+    "dep-audit": "./bin/dep-audit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yahoo/dep-audit"
+  },
+  "keywords": [
+    "license"
+  ],
+  "author": "jungsoo",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "license-checker": "^5.1.2",
+    "request": "^2.72.0",
+    "semver": "^5.1.1",
+    "spdx-correct": "^1.0.2",
+    "spdx-satisfies": "^0.1.3",
+    "validate-npm-package-license": "^3.0.1",
+    "yargs": "^4.7.1"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.3",
+    "mocha": "^2.5.3",
+    "mockery": "^1.7.0",
+    "standard": "^7.1.2"
+  }
+}

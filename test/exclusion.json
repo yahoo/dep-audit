@@ -1,0 +1,13 @@
+{
+    "exclusions": {
+        "aws-sign2": [
+            {
+                "version_range": "0.6.0",
+                "audit_trail": "test",
+                "desc": "fizzzzz"
+            }
+        ]
+    },
+    "inclusions": {},
+    "spdx": "(MIT OR ISC OR BSD-3-Clause OR BSD-2-Clause OR WTFPL OR Apache-2.0 OR CC-BY-3.0 OR Unlicense OR MPL-2.0)"
+}
