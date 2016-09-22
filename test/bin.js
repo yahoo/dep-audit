@@ -1,11 +1,18 @@
 /* globals it, describe, before */
+var path = require('path')
 var assert = require('assert')
 var exec = require('child_process').exec
+var bin = path.resolve(__dirname, '..', 'bin', 'dep-audit')
+
+function config (p) {
+  return path.resolve(__dirname, p)
+}
 
 describe('If license does not match', function () {
   var code
   before(function (done) {
-    exec('bin/dep-audit --config config/config.json',
+    this.timeout(10000)
+    exec(bin + ' --config ' + config('../config/config.json'),
       {cwd: process.cwd()},
       function (error) {
         code = error.code
@@ -21,7 +28,8 @@ describe('If license does not match', function () {
 describe('There is a dependency on inclusion list', function () {
   var code
   before(function (done) {
-    exec('bin/dep-audit --config test/inclusion.json --fix --guess',
+    this.timeout(10000)
+    exec(bin + ' --config ' + config('inclusion.json') + ' --fix --guess',
       {cwd: process.cwd()},
       function (error) {
         code = error
@@ -37,7 +45,8 @@ describe('There is a dependency on inclusion list', function () {
 describe('There is a dependency on exclusion list', function () {
   var err
   before(function (done) {
-    exec('bin/dep-audit --config test/exclusion.json --fix --guess',
+    this.timeout(10000)
+    exec(bin + ' --config ' + config('exclusion.json') + ' --fix --guess',
       {cwd: process.cwd()},
       function (error) {
         err = error
