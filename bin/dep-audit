@@ -1,14 +1,19 @@
 #!/usr/bin/env node
-
 /*
 Copyright 2016, Yahoo Inc.
 Code licensed under the MIT License.
 See LICENSE.txt
 */
+
+// support early versions of node 6
+if (process.stdout._handle && process.stdout._handle.setBlocking) process.stdout._handle.setBlocking(true)
+if (process.stderr._handle && process.stderr._handle.setBlocking) process.stderr._handle.setBlocking(true)
+
+var path = require('path')
 var audit = require('../index')
 var request = require('request')
 var argv = require('yargs')
-.usage('Usage:\n$0 --config <path to config file> [options]' + 
+.usage('Usage:\n$0 --config <path to config file> [options]' +
   '\n$0 --config-url <url> [options]')
 .config()
 .describe({'config-url': 'URL to JSON config file',
@@ -22,7 +27,10 @@ var argv = require('yargs')
 .argv
 
 if (argv['config-url']) {
-  request(argv['config-url'], function (err, res, body) {
+  request.get({
+    uri: argv['config-url'],
+    json: true
+  }, function (err, res, body) {
     if (err) {
       console.error('Could not fetch config file')
       process.exit(2)
@@ -33,12 +41,12 @@ if (argv['config-url']) {
 }
 
 else if (argv.config) {
-  checkDependencies()
+  checkDependencies(require(path.resolve(process.cwd(), argv.config)))
 }
 
 function checkDependencies (body) {
   var opts = {
-    checker: 
+    checker:
       {start: process.cwd(),
       production: true,
       unknown: !argv.guess},
