@@ -38,9 +38,7 @@ if (argv['config-url']) {
       checkDependencies(body)
     }
   })
-}
-
-else if (argv.config) {
+} else if (argv.config) {
   checkDependencies(require(path.resolve(process.cwd(), argv.config)))
 }
 
@@ -55,25 +53,29 @@ function checkDependencies (body) {
     include: (body || argv).inclusions || {},
     exclude: (body || argv).exclusions || {}
   }
-  var beforeHook
   if (argv.hook) {
-    beforeHook = require(argv.hook)
+    opts.hook = require(path.resolve(process.cwd(), argv.hook))
   }
 
-  audit(opts, function (error, inclusions) {
+  audit(opts, function (error, report) {
     if (error) {
-      console.error(error.toString())
-      if (error.item) { // module is on exclusion list
-          console.error(error.item.desc)
-          console.error(error.item.audit_trail)
-      }
+      console.error(error)
       process.exit(1)
     }
+
+    if (Object.keys(report.fail).length) {
+      console.error('The following packages violate the policy:')
+      Object.keys(report.fail).forEach(function (nameVersion) {
+        var reason = report.fail[nameVersion]
+        if (typeof reason === 'string') {
+          console.error('  ' + nameVersion + '    license', JSON.stringify(reason), 'not allowed by policy')
+        } else {
+          console.error('  ' + nameVersion + '    ' + reason.desc, '(' + JSON.stringify(reason.audit_trail) + ')')
+        }
+      })
+      process.exit(1)
+    }
+
     console.log('All modules are allowed!')
-    inclusions.forEach(function (item) {
-        console.log(item.name +' is on the inclusion list.')
-        console.log(item.desc)
-        console.log(item.audit_trail)
-    })
-  }, beforeHook)
+  })
 }

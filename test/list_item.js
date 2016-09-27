@@ -9,7 +9,11 @@ describe('exceptions module', function () {
       return version === accepted
     }}
 
-    mockery.enable({useCleanCache: true})
+    mockery.enable({
+      useCleanCache: true,
+      warnOnReplace: false,
+      warnOnUnregistered: false
+    })
     mockery.registerMock('semver', semverMock)
     var exceptionList = {
       'pp': [{version_range: '2.9.0'}],

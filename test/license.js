@@ -11,7 +11,11 @@ describe('license module', function () {
       }
       callback('success')
     }}
-    mockery.enable({useCleanCache: true})
+    mockery.enable({
+      useCleanCache: true,
+      warnOnReplace: false,
+      warnOnUnregistered: false
+    })
     mockery.registerMock('license-checker', checkerMock)
     getLicenses = require('../lib/license.js')
   })
