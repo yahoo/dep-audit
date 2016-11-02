@@ -38,7 +38,11 @@ describe('audit module', function () {
       }
       return {spdx: true}
     }
-    mockery.enable({useCleanCache: true})
+    mockery.enable({
+      useCleanCache: true,
+      warnOnReplace: false,
+      warnOnUnregistered: false
+    })
     mockery.registerMock('spdx-satisfies', satisfiesMock)
     mockery.registerMock('spdx-correct', fixMock)
     mockery.registerMock('validate-npm-package-license', validMock)
@@ -46,71 +50,76 @@ describe('audit module', function () {
     audit = require('../lib/audit')
   })
 
-  it('Raise error if license invalid and not on inclusion list', function () {
-    try {
-      var modules = {'z@1.0.1': {licenses: 'foo'}}
-      audit(false, modules, 'bar', wl, bl)
-      assert.fail('No error thrown.')
-    } catch (e) {
-      assert.equal(e.message,
-        'License foo is not allowed and module z@1.0.1 is not on the inclusion list')
-    }
+  it('reports packages not in inclusion list', function () {
+    var modules = {'z@1.0.1': {licenses: 'foo'}}
+    var res = audit(false, modules, 'bar', wl, bl)
+    assert.equal(Object.keys(res.pass).length, 0, 'no passing modules')
+    assert.deepEqual(res.fail, {
+      'z@1.0.1': 'foo'
+    }, 'one failing module')
   })
 
-  it('Raise error if license valid and on the exclusion list', function () {
-    try {
-      var modules = {'x@1.0.0': {licenses: 'foo'}}
-      audit(false, modules, 'foo', wl, bl)
-      assert.fail('No error thrown')
-    } catch (e) {
-      assert.equal(e.message, 'Module x@1.0.0 is on the exclusion list')
-    }
+  it('reports packages in exclusion list', function () {
+    var modules = {'x@1.0.0': {licenses: 'foo'}}
+    var res = audit(false, modules, 'foo', wl, bl)
+    assert.equal(Object.keys(res.pass).length, 0, 'no passing modules')
+    assert.deepEqual(res.fail, {
+      'x@1.0.0': {
+        name: 'x',
+        version_range: '1.0.0',
+        audit_trail: '1/1/2000',
+        desc: 'blacklisted'
+      }
+    }, 'one failing module')
   })
 
-  it('Returns info of modules on inclusion list if all modules pass', function () {
+  it('reports all passing modules', function () {
     var modules = {'z@1.0.0': {licenses: 'foo'}, 'y@2.0.0': {licenses: 'bar'}}
-    var item = audit(false, modules, 'foo', wl, bl)
-    assert.deepEqual([{name: 'y', version_range: '2.0.0',
-      audit_trail: '2/2/2000', desc: 'whitelisted'}], item)
-  })
-
-  it('Terminates immediately on first bad module', function () {
-    try {
-      var modules = {'x@1.0.0': {licenses: 'foo'}, 'z@3.0.0': {licenses: 'bar'}}
-      audit(false, modules, 'foo', wl, bl)
-      assert.fail('No error thrown')
-    } catch (e) {
-      assert.equal(e.message, 'Module x@1.0.0 is on the exclusion list')
-    }
+    var res = audit(false, modules, 'foo', wl, bl)
+    assert.deepEqual(res, {
+      pass: {
+        'y@2.0.0': {
+          name: 'y',
+          version_range: '2.0.0',
+          audit_trail: '2/2/2000',
+          desc: 'whitelisted'
+        },
+        'z@1.0.0': 'foo'
+      },
+      fail: {}
+    })
   })
 
   it('Removes asterisks from licenses when checking', function () {
     var modules = {'z@5.0.0': {licenses: '(foo* OR bar*)'}}
-    var item = audit(false, modules, '(foo OR bar)', wl, bl)
-    assert.deepEqual([], item)
+    var res = audit(false, modules, '(foo OR bar)', wl, bl)
+    assert.deepEqual(res.pass, {
+      'z@5.0.0': '(foo OR bar)'
+    })
   })
 
   it('Fixes licenses in spdx expression', function () {
-    var modules = {'z@5.0.0': {licenses: '(foo OR bar OR test)'}}
-    var item = audit(true, modules, '(fix_foo OR fix_bar OR fix_test)', wl, bl)
-    assert.deepEqual([], item)
+    var modules = {'m@5.0.0': {licenses: '(foo OR bar OR test)'}}
+    var res = audit(true, modules, '(fix_foo OR fix_bar OR fix_test)', wl, bl)
+    assert.deepEqual(res.pass, {
+      'm@5.0.0': '(fix_foo OR fix_bar OR fix_test)'
+    })
   })
 
   it('Fixer returns original value if it cannot fix license', function () {
     var modules = {'z@2.3.0': {licenses: '(unknown OR unknown)'}}
-    var item = audit(true, modules, '(unknown OR unknown)', wl, bl)
-    assert.deepEqual([], item)
+    var res = audit(true, modules, '(unknown OR unknown)', wl, bl)
+    assert.deepEqual(res.pass, {
+      'z@2.3.0': '(unknown OR unknown)'
+    })
   })
 
   it('If license cannot be read, does not satisfy', function () {
-    var modules = {'y@2.0.0': {licenses: 'err'}}
-    audit(false, modules, 'mit', wl, bl)
-    try {
-      modules = {z: {licenses: 'err'}}
-      audit(false, modules, 'mit', wl, bl)
-    } catch (e) {
-      assert.equal(e.message, 'License err is not allowed and module z is not on the inclusion list')
-    }
+    var modules = {z: {licenses: 'err'}}
+    var res = audit(false, modules, 'mit', wl, bl)
+    assert.deepEqual(res.fail, {
+      'z': 'err'
+    })
   })
 
   it('If allowed licenses are invalid, throws error', function () {
@@ -124,8 +133,10 @@ describe('audit module', function () {
 
   it('If license field is array, create spdx', function () {
     var modules = {'x@2.1.1': {licenses: ['MIT', 'ISC']}}
-    var item = audit(false, modules, '(MIT OR ISC)', wl, bl)
-    assert.deepEqual([], item)
+    var res = audit(false, modules, '(MIT OR ISC)', wl, bl)
+    assert.deepEqual(res.pass, {
+      'x@2.1.1': '(MIT OR ISC)'
+    })
   })
 
   after(function () {

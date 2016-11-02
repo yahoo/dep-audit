@@ -6,7 +6,7 @@ npm install -g dep-audit
 ```
 
 Given a path to a configuration file, this module will check that each module
-in the node_modules tree of the current directory satisfies the requirements 
+in the node_modules tree of the current directory satisfies the requirements
 established by the configuration file.
 
 ```
@@ -42,10 +42,10 @@ If a module is not in `exclusions` or `inclusions`, it will be allowed if
 its license satisfies the SPDX expression in `spdx`.
 Modules in `exclusions` will not be allowed even if their license
 satisfies the spdx expression.
-Modules in `inclusions` will be allowed even if their license 
+Modules in `inclusions` will be allowed even if their license
 does not satisfy the spdx expression.
 
-If an unacceptable module that does not satisfy the requirements in the config file 
+If an unacceptable module that does not satisfy the requirements in the config file
 is found, dep-audit will log the module as well as its audit trail and description.
 The process will then exit with exit code 1.
 
@@ -62,8 +62,8 @@ In order to supply a hook, pass the file path of the module to the hook option.
 ```
 --hook /path/to/hook/
 ```
-The file must export a function that takes an object representing the 
-node_modules tree as an argument and returns an object representing the 
+The file must export a function that takes an object representing the
+node_modules tree as an argument and returns an object representing the
 modules from the node_modules tree that should be audited.
 ```
 module.exports = function (json) {
@@ -105,17 +105,21 @@ Then, just require the module in your project and you can audit your dependencie
 ```
 var audit = require('dep-audit')
 var opts = {
-  "checker": 
+  "hook": function (json) {
+    console.log(json)
+    return json
+  },
+  "checker":
     {
       "start": "/path/to/project/",
       "production": true,
         // If true, will only audit production dependencies.
         // If false, will also audit dev dependencies,
       "unknown": false
-        // If true, will only check package.json for license. 
+        // If true, will only check package.json for license.
         // If false, will guess license from other files
     },
-  "fix": true, // If true, will fix incorrect licenses,
+  "fix": true, // If true, will fix malformed licenses,
   "spdx": "MIT", // spdx expression indicating which licenses are allowed
   "include": {
     "name":[
@@ -137,20 +141,17 @@ var opts = {
   }
 }
 
-function hook (json) {
-  console.log(json)
-}
-audit (opts, function (error, exceptions) {
+audit (opts, function (error, report) {
   if (error) {
     throw error
   }
-  exceptions.forEach(function (item) {
-    console.log(item)
-  }, hook)
+  Object.keys(report.fail).forEach(function (nameVersion) {
+    console.log('FAILED', nameVersion, 'because', report.fail[nameVersion])
+  })
 })
 ```
 `opts.include` and `opts.exclude` should be formatted like the `inclusions` and `exclusions`
-fields of a config file used in the command line tool. 
+fields of a config file used in the command line tool.
 That is, `opts.include` and `opts.exclude` should be objects where the keys are module names
 and the values are lists containing objects with `version_range`, `audit_trail`, and `desc` fields.
 
