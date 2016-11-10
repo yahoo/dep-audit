@@ -22,7 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "bluebird": "^3.4.1",
-    "license-checker": "^5.1.2",
+    "license-checker": "^8.0.2",
     "request": "^2.72.0",
     "semver": "^5.1.1",
     "spdx-correct": "^1.0.2",

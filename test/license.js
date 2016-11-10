@@ -5,12 +5,14 @@ var mockery = require('mockery')
 describe('license module', function () {
   var getLicenses
   before(function () {
-    var checkerMock = {init: function (opts, callback) {
-      if (opts.err) {
-        callback(null, new Error('Could not get licenses'))
+    var checkerMock = {
+      init: function (opts, callback) {
+        if (opts.err) {
+          callback(new Error('Could not get licenses', null))
+        }
+        callback(null, 'success')
       }
-      callback('success')
-    }}
+    }
     mockery.enable({
       useCleanCache: true,
       warnOnReplace: false,
